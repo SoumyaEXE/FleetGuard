@@ -1,295 +1,398 @@
-import Link from 'next/link';
+'use client';
 
-export default function Home() {
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  onSnapshot, 
+  deleteDoc, 
+  doc, 
+  serverTimestamp, 
+  orderBy 
+} from "firebase/firestore";
+import { auth, db } from '../../lib/firebase';
+
+export default function DashboardPage() {
+  const [user, setUser] = useState(null);
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [newVehicle, setNewVehicle] = useState({ name: '', plate: '' });
+  const [adding, setAdding] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all'); // all, healthy, warning, critical
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        const q = query(
+          collection(db, "vehicles"), 
+          where("userId", "==", currentUser.uid)
+        );
+
+        const unsubscribeVehicles = onSnapshot(q, (snapshot) => {
+          const vehicleData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })).sort((a, b) => {
+            const timeA = a.createdAt?.seconds || 0;
+            const timeB = b.createdAt?.seconds || 0;
+            return timeB - timeA;
+          });
+          setVehicles(vehicleData);
+          setLoading(false);
+        }, (error) => {
+          console.error("Error fetching vehicles: ", error);
+          setLoading(false);
+        });
+
+        return () => unsubscribeVehicles();
+      } else {
+        router.push('/login');
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, [router]);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
+
+  const showToastMessage = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+  };
+
+  const handleAddVehicle = async (e) => {
+    e.preventDefault();
+    setAdding(true);
+
+    try {
+      await addDoc(collection(db, "vehicles"), {
+        userId: user.uid,
+        vehicleName: newVehicle.name,
+        licensePlate: newVehicle.plate.toUpperCase(),
+        createdAt: serverTimestamp()
+      });
+      
+      showToastMessage('Vehicle added successfully!', 'success');
+      setShowModal(false);
+      setNewVehicle({ name: '', plate: '' });
+    } catch (error) {
+      console.error("Error adding vehicle: ", error);
+      showToastMessage('Failed to add vehicle', 'error');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleDeleteVehicle = async (vehicleId) => {
+    if (confirm('Are you sure you want to delete this vehicle?')) {
+      try {
+        await deleteDoc(doc(db, "vehicles", vehicleId));
+        showToastMessage('Vehicle deleted successfully', 'success');
+      } catch (error) {
+        console.error("Error deleting vehicle: ", error);
+        showToastMessage('Failed to delete vehicle', 'error');
+      }
+    }
+  };
+
+  // Computed Stats
+  const stats = {
+    total: vehicles.length,
+    avgHealth: vehicles.length > 0 
+      ? Math.round(vehicles.reduce((acc, v) => acc + (v.lastHealthScore || 0), 0) / vehicles.length) 
+      : 0,
+    critical: vehicles.filter(v => (v.lastHealthScore || 100) < 50).length,
+    warning: vehicles.filter(v => (v.lastHealthScore || 100) >= 50 && (v.lastHealthScore || 100) < 80).length
+  };
+
+  // Filtered Vehicles
+  const filteredVehicles = vehicles.filter(vehicle => {
+    const matchesSearch = vehicle.vehicleName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    const score = vehicle.lastHealthScore || 100;
+    if (filterStatus === 'healthy') return score >= 80;
+    if (filterStatus === 'warning') return score >= 50 && score < 80;
+    if (filterStatus === 'critical') return score < 50;
+    
+    return true;
+  });
+
+  const getHealthColor = (score) => {
+    if (score >= 80) return 'var(--color-success)';
+    if (score >= 50) return 'var(--color-warning)';
+    return 'var(--color-danger)';
+  };
+
+  const getHealthLabel = (score) => {
+    if (score >= 80) return 'Healthy';
+    if (score >= 50) return 'Attention';
+    return 'Critical';
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--color-primary)' }}></i>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="dashboard-body">
       {/* Navigation */}
-      <nav className="navbar">
-        <div className="container nav-content">
-          <div className="logo">
-            <i className="fa-solid fa-truck-fast"></i> FLEETGUARD
+      <nav className="dashboard-nav">
+        <div className="logo" style={{ fontSize: '1.2rem' }}>
+          <i className="fa-solid fa-truck-fast"></i> FLEETGUARD
+        </div>
+        <div className="user-menu">
+          <div className="user-info">
+            <span className="user-name">{user?.displayName || 'Fleet Manager'}</span>
+            <span className="user-email">{user?.email}</span>
           </div>
-          <div className="nav-links">
-            <a href="#features">Platform</a>
-            <a href="#solutions">Solutions</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#resources">Resources</a>
-          </div>
-          <Link href="/login" className="btn btn-primary">
-            Get Started
-          </Link>
+          <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+            <i className="fa-solid fa-right-from-bracket"></i>
+          </button>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="hero">
-        <div className="container hero-grid">
-          <div className="hero-content">
-            <span className="badge badge-blue" style={{ marginBottom: '1.5rem' }}>
-              New: AI Predictive Maintenance
-            </span>
-            <h1>
-              Intelligent Fleet Diagnostics for <span className="text-gradient">Modern Logistics</span>
-            </h1>
-            <p>
-              Reduce downtime by 40% with our AI-powered inspection platform. Real-time health monitoring, cost prediction, and automated maintenance scheduling.
-            </p>
+      {/* Main Content */}
+      <div className="dashboard-container">
+        
+        {/* Welcome & Stats Section */}
+        <div className="dashboard-welcome">
+          <div>
+            <h1>My Garage</h1>
+            <p className="text-light">Welcome back, here's what's happening with your fleet today.</p>
+          </div>
+          <button onClick={() => setShowModal(true)} className="btn btn-primary desktop-add-btn">
+            <i className="fa-solid fa-plus"></i> Add Vehicle
+          </button>
+        </div>
 
-            <div className="hero-actions">
-              <Link href="/login" className="btn btn-primary">
-                Start Free Inspection <i className="fa-solid fa-arrow-right"></i>
-              </Link>
-              <a href="#" className="btn btn-secondary">
-                <i className="fa-solid fa-play"></i> Watch Demo
-              </a>
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
+              <i className="fa-solid fa-truck"></i>
             </div>
-
-            <div className="trust-badges">
-              <span>Trusted by:</span>
-              <span>
-                <i className="fa-brands fa-aws"></i> AWS Logistics
-              </span>
-              <span>
-                <i className="fa-solid fa-cube"></i> Maersk
-              </span>
-              <span>
-                <i className="fa-solid fa-truck"></i> DHL
-              </span>
+            <div className="stat-info">
+              <span className="stat-label">Total Vehicles</span>
+              <span className="stat-value">{stats.total}</span>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+              <i className="fa-solid fa-heart-pulse"></i>
+            </div>
+            <div className="stat-info">
+              <span className="stat-label">Avg. Fleet Health</span>
+              <span className="stat-value">{stats.avgHealth}%</span>
             </div>
           </div>
 
-          {/* CSS-Only Dashboard Visual */}
-          <div className="hero-visual">
-            <div className="float-card alert">
-              <i className="fa-solid fa-triangle-exclamation" style={{ color: 'var(--color-warning)' }}></i>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Brake Pad Warning</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>Vehicle #402 • Critical</div>
-              </div>
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: '#fef2f2', color: '#dc2626' }}>
+              <i className="fa-solid fa-triangle-exclamation"></i>
             </div>
+            <div className="stat-info">
+              <span className="stat-label">Critical Issues</span>
+              <span className="stat-value">{stats.critical}</span>
+            </div>
+          </div>
+        </div>
 
-            <div className="dashboard-card">
-              <div className="dash-header">
-                <div style={{ fontWeight: 700 }}>Fleet Health Overview</div>
-                <div style={{ color: 'var(--color-success)', fontSize: '0.9rem' }}>
-                  <i className="fa-solid fa-circle"></i> Live
-                </div>
-              </div>
-              <div className="dash-stat-grid">
-                <div className="stat-box">
-                  <div className="label">Active Vehicles</div>
-                  <div className="value">1,248</div>
-                  <div className="trend up">
-                    <i className="fa-solid fa-arrow-trend-up"></i> +12%
+        {/* Controls & Filters */}
+        <div className="controls-row">
+          <div className="search-wrapper">
+            <i className="fa-solid fa-magnifying-glass"></i>
+            <input 
+              type="text" 
+              placeholder="Search vehicles..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="filter-wrapper">
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+              <option value="all">All Status</option>
+              <option value="healthy">Healthy</option>
+              <option value="warning">Needs Attention</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Vehicle Grid */}
+        <div className="vehicle-grid">
+          {filteredVehicles.length === 0 ? (
+            <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
+              <i className="fa-solid fa-car empty-icon"></i>
+              <h3>No vehicles found</h3>
+              <p style={{ color: 'var(--text-light)', marginBottom: '1.5rem' }}>
+                {vehicles.length === 0 ? "Add your first vehicle to get started." : "Try adjusting your search or filters."}
+              </p>
+              {vehicles.length === 0 && (
+                <button onClick={() => setShowModal(true)} className="btn btn-primary">Add Vehicle</button>
+              )}
+            </div>
+          ) : (
+            filteredVehicles.map(vehicle => {
+              const score = vehicle.lastHealthScore || 0;
+              const healthColor = getHealthColor(score);
+              
+              return (
+                <div key={vehicle.id} className="vehicle-card">
+                  <div className="vehicle-card-header">
+                    <div className="vehicle-identity">
+                      <div className="vehicle-icon">
+                        <i className="fa-solid fa-car-side"></i>
+                      </div>
+                      <div>
+                        <div className="vehicle-name">{vehicle.vehicleName}</div>
+                        <span className="vehicle-plate">{vehicle.licensePlate}</span>
+                      </div>
+                    </div>
+                    <div className="card-actions">
+                      <button 
+                        className="btn-icon-only" 
+                        onClick={() => handleDeleteVehicle(vehicle.id)}
+                        title="Delete Vehicle"
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="health-status-section">
+                    <div className="health-header">
+                      <span className="health-label">Health Score</span>
+                      <span className="health-score" style={{ color: healthColor }}>{score}/100</span>
+                    </div>
+                    <div className="health-bar-bg">
+                      <div 
+                        className="health-bar-fill" 
+                        style={{ width: `${score}%`, backgroundColor: healthColor }}
+                      ></div>
+                    </div>
+                    <div className="status-badge" style={{ 
+                      backgroundColor: `${healthColor}20`, 
+                      color: healthColor,
+                      marginTop: '0.5rem'
+                    }}>
+                      <i className={`fa-solid ${score >= 80 ? 'fa-check-circle' : score >= 50 ? 'fa-exclamation-circle' : 'fa-circle-xmark'}`}></i>
+                      {getHealthLabel(score)}
+                    </div>
+                  </div>
+
+                  <div className="card-footer">
+                    <Link 
+                      href={`/vehicle/${vehicle.id}?name=${encodeURIComponent(vehicle.vehicleName)}&plate=${encodeURIComponent(vehicle.licensePlate)}`} 
+                      className="btn btn-primary btn-full" 
+                    >
+                      {vehicle.lastInspectionId ? 'New Inspection' : 'Start Inspection'}
+                    </Link>
+                    
+                    {vehicle.lastInspectionId && (
+                      <Link 
+                        href={`/analysis/${vehicle.lastInspectionId}`}
+                        className="btn btn-outline btn-full"
+                      >
+                        View Report
+                      </Link>
+                    )}
                   </div>
                 </div>
-                <div className="stat-box">
-                  <div className="label">Maintenance Cost</div>
-                  <div className="value">$42k</div>
-                  <div className="trend down">
-                    <i className="fa-solid fa-arrow-trend-down"></i> -8%
-                  </div>
-                </div>
-              </div>
-              <div className="graph-placeholder">
-                <div className="graph-line"></div>
-              </div>
-            </div>
+              );
+            })
+          )}
+        </div>
+      </div>
 
-            <div className="float-card success">
-              <i className="fa-solid fa-check-circle" style={{ color: 'var(--color-success)' }}></i>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Service Completed</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>Saved $450 on labor</div>
-              </div>
+      {/* Add Vehicle FAB (Mobile Only) */}
+      <button onClick={() => setShowModal(true)} className="fab-add mobile-only">
+        <i className="fa-solid fa-plus"></i>
+      </button>
+
+      {/* Add Vehicle Modal */}
+      {showModal && (
+        <div className="modal-overlay active" onClick={(e) => e.target.className.includes('modal-overlay') && setShowModal(false)}>
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3 className="modal-title">Add New Vehicle</h3>
+              <button onClick={() => setShowModal(false)} className="btn-close"><i className="fa-solid fa-xmark"></i></button>
             </div>
+            
+            <form onSubmit={handleAddVehicle}>
+              <div className="form-group">
+                <label htmlFor="vehicle-name">Vehicle Name</label>
+                <input 
+                  type="text" 
+                  id="vehicle-name" 
+                  className="form-input" 
+                  placeholder="e.g., Honda Civic 2020" 
+                  required 
+                  minLength="2" 
+                  maxLength="50"
+                  value={newVehicle.name}
+                  onChange={(e) => setNewVehicle({...newVehicle, name: e.target.value})}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="license-plate">License Plate Number</label>
+                <input 
+                  type="text" 
+                  id="license-plate" 
+                  className="form-input" 
+                  placeholder="e.g., DL01AB1234" 
+                  required 
+                  minLength="4" 
+                  maxLength="15" 
+                  style={{ textTransform: 'uppercase' }}
+                  value={newVehicle.plate}
+                  onChange={(e) => setNewVehicle({...newVehicle, plate: e.target.value})}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={adding}>
+                  {adding ? 'Adding...' : 'Add Vehicle'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* Stats Section */}
-      <section className="stats-section">
-        <div className="container stats-container">
-          <div className="stat-item">
-            <h3>2.5M+</h3>
-            <p>Inspections Analyzed</p>
-          </div>
-          <div className="stat-item">
-            <h3>$12M</h3>
-            <p>Client Savings</p>
-          </div>
-          <div className="stat-item">
-            <h3>99.9%</h3>
-            <p>Uptime Guarantee</p>
-          </div>
-          <div className="stat-item">
-            <h3>450+</h3>
-            <p>Enterprise Partners</p>
-          </div>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`toast ${toast.show ? 'show' : ''}`} style={{ display: 'flex', opacity: 1, transform: 'translateY(0)' }}>
+          <i className={`fa-solid ${toast.type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}`}></i>
+          <span>{toast.message}</span>
         </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="features">
-        <div className="container">
-          <div className="section-title">
-            <span className="badge badge-green" style={{ marginBottom: '1rem' }}>
-              Platform Features
-            </span>
-            <h2>Everything you need to run a high-performance fleet</h2>
-            <p>
-              Our comprehensive suite of tools helps you manage maintenance, costs, and compliance from a single dashboard.
-            </p>
-          </div>
-
-          <div className="feature-grid">
-            <div className="feature-card">
-              <div className="icon-box">
-                <i className="fa-solid fa-brain"></i>
-              </div>
-              <h3>AI Diagnostic Engine</h3>
-              <p>
-                Our proprietary AI analyzes audio and visual data to detect mechanical issues weeks before they cause a breakdown.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="icon-box">
-                <i className="fa-solid fa-chart-pie"></i>
-              </div>
-              <h3>Predictive Costing</h3>
-              <p>
-                Get accurate forecasts for upcoming maintenance expenses. Budget with confidence and avoid surprise repair bills.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="icon-box">
-                <i className="fa-solid fa-network-wired"></i>
-              </div>
-              <h3>Fleet Integration</h3>
-              <p>Seamlessly connects with your existing telematics hardware and ERP systems via our robust API.</p>
-            </div>
-            <div className="feature-card">
-              <div className="icon-box">
-                <i className="fa-solid fa-file-shield"></i>
-              </div>
-              <h3>Compliance Automation</h3>
-              <p>
-                Automatically generate DOT-compliant inspection reports and maintain a digital audit trail for every vehicle.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="icon-box">
-                <i className="fa-solid fa-mobile-screen"></i>
-              </div>
-              <h3>Driver Mobile App</h3>
-              <p>
-                Empower drivers to perform standardized pre-trip inspections and report issues instantly from their smartphones.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="icon-box">
-                <i className="fa-solid fa-screwdriver-wrench"></i>
-              </div>
-              <h3>Vendor Network</h3>
-              <p>Access our curated network of certified mechanics and get preferred pricing on parts and labor.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="cta-section">
-        <div className="container cta-box">
-          <h2>Ready to modernize your fleet operations?</h2>
-          <p style={{ marginBottom: '2rem', color: 'var(--text-main)' }}>
-            Join industry leaders who trust FleetGuard for their critical logistics infrastructure.
-          </p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <Link href="/login" className="btn btn-primary">
-              Start Free Trial
-            </Link>
-            <a href="#" className="btn btn-secondary">
-              Contact Sales
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="container">
-          <div className="footer-grid">
-            <div className="footer-brand">
-              <div className="logo">FLEETGUARD</div>
-              <p>
-                Empowering logistics companies with intelligent vehicle diagnostics and predictive maintenance solutions.
-              </p>
-            </div>
-            <div className="footer-col">
-              <h4>Product</h4>
-              <ul>
-                <li>
-                  <a href="#">Features</a>
-                </li>
-                <li>
-                  <a href="#">Integrations</a>
-                </li>
-                <li>
-                  <a href="#">Enterprise</a>
-                </li>
-                <li>
-                  <a href="#">Security</a>
-                </li>
-              </ul>
-            </div>
-            <div className="footer-col">
-              <h4>Company</h4>
-              <ul>
-                <li>
-                  <a href="#">About Us</a>
-                </li>
-                <li>
-                  <a href="#">Careers</a>
-                </li>
-                <li>
-                  <a href="#">Blog</a>
-                </li>
-                <li>
-                  <a href="#">Contact</a>
-                </li>
-              </ul>
-            </div>
-            <div className="footer-col">
-              <h4>Legal</h4>
-              <ul>
-                <li>
-                  <a href="#">Privacy Policy</a>
-                </li>
-                <li>
-                  <a href="#">Terms of Service</a>
-                </li>
-                <li>
-                  <a href="#">Cookie Policy</a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <div>&copy; 2025 FleetGuard Inc. All rights reserved.</div>
-            <div style={{ display: 'flex', gap: '1.5rem' }}>
-              <a href="#">
-                <i className="fa-brands fa-twitter"></i>
-              </a>
-              <a href="#">
-                <i className="fa-brands fa-linkedin"></i>
-              </a>
-              <a href="#">
-                <i className="fa-brands fa-github"></i>
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </>
+      )}
+    </div>
   );
 }
