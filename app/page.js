@@ -15,7 +15,7 @@ import {
   serverTimestamp, 
   orderBy 
 } from "firebase/firestore";
-import { auth, db } from '../../lib/firebase';
+import { auth, db } from '../lib/firebase';
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
