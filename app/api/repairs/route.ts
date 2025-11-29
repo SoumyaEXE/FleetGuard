@@ -40,17 +40,22 @@ export async function POST(request: NextRequest) {
     const status = 'pending';
 
     // Save to CSV
-    await appendRepairToCSV({
-      id,
-      vehicleId,
-      damageLevel,
-      repairDate,
-      createdAt,
-      driverEmail,
-      managerEmail,
-      status,
-      inspectionId,
-    });
+    try {
+      await appendRepairToCSV({
+        id,
+        vehicleId,
+        damageLevel,
+        repairDate,
+        createdAt,
+        driverEmail,
+        managerEmail,
+        status,
+        inspectionId,
+      });
+    } catch (csvError) {
+      console.error('Failed to save to CSV:', csvError);
+      // Continue execution even if CSV save fails, as we want to show the calendar link
+    }
 
     // Generate calendar invite
     const { start, end } = createRepairDateTime(repairDate);
