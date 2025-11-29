@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleetguard - AI Diagnostic Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="analysis-body">
+
+    <div class="analysis-container">
+        <!-- Header -->
+        <header class="analysis-header">
+            <div class="header-info">
+                <h1>AI Diagnostic Analysis</h1>
+                <div class="vehicle-card-mini">
+                    <span><i class="fa-solid fa-truck"></i> Logistics Unit #402</span>
+                    <span><i class="fa-solid fa-calendar"></i> Nov 25, 2025</span>
+                    <span><i class="fa-solid fa-hashtag"></i> VIN: 1HG...928</span>
+                </div>
+            </div>
+            <div class="health-score-container">
+                <div class="health-circle">
+                    <span>82%</span>
+                </div>
+                <span style="font-weight: 600; font-size: 0.9rem;">Overall Health</span>
+            </div>
+        </header>
+
+        <!-- AI Insights Banner -->
+        <div class="ai-insight-box" style="margin-bottom: 2rem; background: #eef2ff; border-color: var(--accent-blue);">
+            <h3 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-lightbulb" style="color: var(--accent-yellow);"></i> AI Recommendations</h3>
+            <p>Based on your driving patterns, bundling the <strong>brake pad replacement</strong> with your upcoming <strong>50,000 km service</strong> will save approximately <strong>15%</strong> on labor costs.</p>
+        </div>
+
+        <!-- 3 Column Layout -->
+        <div class="analysis-grid">
+            <!-- Column 1: Urgent -->
+            <div class="analysis-col col-urgent">
+                <div class="col-header">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-ocher);"></i>
+                    <h2 style="color: var(--accent-ocher);">Immediate Attention</h2>
+                </div>
+                
+                <div class="issue-card">
+                    <div class="issue-header">
+                        <span class="issue-title"><i class="fa-solid fa-circle-exclamation" style="color: var(--accent-ocher);"></i> Worn Brake Pads</span>
+                        <span class="badge-urgent">CRITICAL</span>
+                    </div>
+                    <p class="issue-desc">Front brake pads are at 15% life. Metal-on-metal contact risk high.</p>
+                    <div class="issue-meta">
+                        <span>$180 - $250</span>
+                        <span>Within 24h</span>
+                    </div>
+                    <button class="btn btn-primary btn-sm">Book Service</button>
+                </div>
+
+                <div class="issue-card">
+                    <div class="issue-header">
+                        <span class="issue-title"><i class="fa-solid fa-droplet" style="color: var(--accent-ocher);"></i> Oil Leak</span>
+                        <span class="badge-urgent">HIGH</span>
+                    </div>
+                    <p class="issue-desc">Active oil leak detected near gasket. Fluid levels dropping.</p>
+                    <div class="issue-meta">
+                        <span>$120 - $300</span>
+                        <span>Within 48h</span>
+                    </div>
+                    <button class="btn btn-primary btn-sm">Book Service</button>
+                </div>
+            </div>
+
+            <!-- Column 2: Upcoming -->
+            <div class="analysis-col col-upcoming">
+                <div class="col-header">
+                    <i class="fa-solid fa-clock" style="color: var(--accent-yellow);"></i>
+                    <h2>Upcoming Maintenance</h2>
+                </div>
+
+                <div class="issue-card">
+                    <div class="issue-header">
+                        <span class="issue-title"><i class="fa-solid fa-filter" style="color: #bfa100;"></i> Air Filter</span>
+                        <span class="badge-medium">MEDIUM</span>
+                    </div>
+                    <p class="issue-desc">Engine air intake flow reduced by 20%. Replacement recommended.</p>
+                    <div class="issue-meta">
+                        <span>$40 - $60</span>
+                        <span>2-4 Weeks</span>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <div class="issue-header">
+                        <span class="issue-title"><i class="fa-solid fa-rotate" style="color: #bfa100;"></i> Tyre Rotation</span>
+                        <span class="badge-medium">MEDIUM</span>
+                    </div>
+                    <p class="issue-desc">Uneven wear pattern detected on front left tyre.</p>
+                    <div class="issue-meta">
+                        <span>$30 - $50</span>
+                        <span>500 km</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 3: Future -->
+            <div class="analysis-col col-future">
+                <div class="col-header">
+                    <i class="fa-solid fa-calendar-check" style="color: var(--accent-blue);"></i>
+                    <h2 style="color: var(--accent-blue);">Future Planning</h2>
+                </div>
+
+                <div class="issue-card">
+                    <div class="issue-header">
+                        <span class="issue-title"><i class="fa-solid fa-snowflake" style="color: var(--accent-blue);"></i> Winter Tyres</span>
+                        <span class="badge-low">ROUTINE</span>
+                    </div>
+                    <p class="issue-desc">Prepare for seasonal change. Current tread depth good for dry conditions.</p>
+                    <div class="issue-meta">
+                        <span>$600+</span>
+                        <span>6 Weeks</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Breakdown Accordions -->
+        <h2 style="margin-bottom: 1.5rem; font-family: 'Montserrat', sans-serif;">System Breakdown</h2>
+
+        <div class="accordion-section">
+            <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                <div class="acc-title">
+                    <i class="fa-solid fa-gears"></i> Engine & Transmission
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="health-bar-mini"><div class="bar-fill warning" style="width: 70%;"></div></div>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-content">
+                <ul class="check-list">
+                    <li class="check-item"><i class="fa-solid fa-check"></i> Transmission shifting smooth</li>
+                    <li class="check-item"><i class="fa-solid fa-triangle-exclamation"></i> Minor valve cover gasket seepage</li>
+                    <li class="check-item"><i class="fa-solid fa-check"></i> No unusual knocking sounds</li>
+                </ul>
+                <div class="ai-insight-box">
+                    <strong>AI Analysis:</strong> Audio spectrum analysis confirms normal combustion cycles, but visual inspection suggests early signs of gasket wear. Monitor oil levels weekly.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-section">
+            <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                <div class="acc-title">
+                    <i class="fa-solid fa-circle-notch"></i> Brakes & Tyres
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="health-bar-mini"><div class="bar-fill danger" style="width: 40%;"></div></div>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-content open">
+                <ul class="check-list">
+                    <li class="check-item"><i class="fa-solid fa-xmark"></i> Front brake pads < 3mm</li>
+                    <li class="check-item"><i class="fa-solid fa-triangle-exclamation"></i> Left front tyre uneven wear</li>
+                    <li class="check-item"><i class="fa-solid fa-check"></i> Rear drums functional</li>
+                </ul>
+                <div class="ai-insight-box">
+                    <strong>AI Analysis:</strong> High-frequency squeal reported matches wear indicator sound profile. Immediate replacement required to prevent rotor damage.
+                </div>
+                <div class="file-preview-grid" style="margin-top: 1rem;">
+                    <div class="file-thumbnail"><img src="https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=200" alt="Brake"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-section">
+            <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                <div class="acc-title">
+                    <i class="fa-solid fa-plug"></i> Electrical System
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="health-bar-mini"><div class="bar-fill" style="width: 95%;"></div></div>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-content">
+                <ul class="check-list">
+                    <li class="check-item"><i class="fa-solid fa-check"></i> Battery voltage optimal (12.6V)</li>
+                    <li class="check-item"><i class="fa-solid fa-check"></i> Alternator charging correctly</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Cost Summary Card -->
+    <div class="cost-summary-card">
+        <h3 style="font-size: 0.9rem; color: #666; text-transform: uppercase;">Total Estimated Cost</h3>
+        <div class="cost-total">$370 - $660</div>
+        <div style="font-size: 0.8rem; color: #888; margin-bottom: 1rem;">Includes parts & labor</div>
+        
+        <div class="cost-actions">
+            <button class="btn btn-primary" style="width: 100%;">Schedule Appointment</button>
+            <button class="btn btn-secondary" style="width: 100%; border-color: var(--accent-blue); color: var(--accent-blue);">Share with Mechanic</button>
+            <button class="btn" style="width: 100%; background: #333; color: #fff;">Download Report</button>
+        </div>
+    </div>
+
+</body>
+</html>

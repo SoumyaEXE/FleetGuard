@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - FleetGuard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-body">
+
+    <!-- Navigation -->
+    <nav class="dashboard-nav">
+        <div class="logo" style="font-size: 1.2rem;">
+            <i class="fa-solid fa-truck-fast"></i> FLEETGUARD
+        </div>
+        <div class="user-menu">
+            <div class="user-info">
+                <span class="user-name" id="user-name">Loading...</span>
+                <span class="user-email" id="user-email">...</span>
+            </div>
+            <button id="logout-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h2>My Vehicles</h2>
+            <!-- Optional: Search or Filter could go here -->
+        </div>
+
+        <div id="vehicle-list" class="vehicle-grid">
+            <!-- Vehicles will be injected here -->
+            <div class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin empty-icon"></i>
+                <p>Loading your fleet...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Vehicle FAB -->
+    <button id="fab-add" class="fab-add">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+
+    <!-- Add Vehicle Modal -->
+    <div id="add-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Vehicle</h3>
+                <button id="close-modal" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="add-vehicle-form">
+                <div class="form-group">
+                    <label for="vehicle-name">Vehicle Name</label>
+                    <input type="text" id="vehicle-name" class="form-input" placeholder="e.g., Honda Civic 2020" required minlength="2" maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="license-plate">License Plate Number</label>
+                    <input type="text" id="license-plate" class="form-input" placeholder="e.g., DL01AB1234" required minlength="4" maxlength="15" style="text-transform: uppercase;">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" id="cancel-add" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Vehicle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toast-message">Success</span>
+    </div>
+
+    <script type="module" src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleetguard Logistics - Car Details</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="formstyle.css">
+    <script type="module">
+        import { auth, db } from "./firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { doc, getDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const vehicleId = urlParams.get('vehicleId');
+        const vehicleName = urlParams.get('name');
+        const vehiclePlate = urlParams.get('plate');
+
+        if (!vehicleId) {
+            alert('No vehicle selected. Redirecting to dashboard.');
+            window.location.href = 'dashboard.html';
+        }
+
+        // Update UI with vehicle info
+        // You might want to add elements to display this info in form.html
+        console.log(`Inspecting: ${vehicleName} (${vehiclePlate})`);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                // Setup form submission handler here if needed
+                // For now, we just ensure user is logged in
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Left Panel: Visual & Preview -->
+        <div class="left-panel">
+            <div class="overlay"></div>
+            <div class="brand-mark">
+                <i class="fa-solid fa-truck-fast"></i>
+                <span>FLEETGUARD</span>
+            </div>
+            <div class="vehicle-preview">
+                <!-- Animated Car Scene -->
+                <div class="animation-container">
+                    <div class="country-wrap">
+                        <div class="sun"></div>
+                        <div class="grass"></div>
+                        <div class="street">
+                            <div class="car">
+                                <div class="car-body">
+                                    <div class="car-top-back">
+                                        <div class="back-curve"></div>
+                                    </div>
+                                    <div class="car-gate"></div>
+                                    <div class="car-top-front">
+                                        <div class="wind-sheild"></div>
+                                    </div>
+                                    <div class="bonet-front"></div>
+                                    <div class="stepney"></div>
+                                </div>
+                                <div class="boundary-tyre-cover">
+                                    <div class="boundary-tyre-cover-back-bottom"></div>
+                                    <div class="boundary-tyre-cover-inner"></div>	
+                                </div>
+                                <div class="tyre-cover-front">
+                                    <div class="boundary-tyre-cover-inner-front"></div>
+                                </div>
+                                <div class="base-axcel"></div>
+                                <div class="front-bumper"></div>
+                                <div class="tyre">		
+                                    <div class="gap"></div>	
+                                </div>
+                                <div class="tyre front">
+                                    <div class="gap"></div>	
+                                </div>
+                                <div class="car-shadow"></div>
+                            </div>
+                        </div>
+                        <div class="street-stripe"></div>
+                        <div class="hill"></div>
+                    </div>
+                </div>
+                
+                <div class="preview-details">
+                    <h3>Logistics Fleet Support</h3>
+                    <p>Status: <span class="badge">OnDuty</span></p>
+                </div>
+            </div>
+            <div class="decorative-line"></div>
+        </div>
+
+        <!-- Right Panel: Form -->
+        <div class="right-panel">
+            <header class="form-header glass-effect">
+                <h1>Vehicle Inspection</h1>
+                <p>Complete the comprehensive diagnostic checklist.</p>
+            </header>
+
+
+
+            <form class="logistics-form">
+                <!-- Section 1: Sound Analysis -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-volume-high section-icon"></i>
+                        <h2>Sound Analysis</h2>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Any unusual engine sound?</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="engine-sound">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="checkbox-grid">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="sound-knocking">
+                            <label for="sound-knocking">Knocking</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="sound-ticking">
+                            <label for="sound-ticking">Ticking</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="sound-rattling">
+                            <label for="sound-rattling">Rattling</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="sound-whining">
+                            <label for="sound-whining">Whining</label>
+                        </div>
+                    </div>
+                    <div class="input-grid" style="margin-top: 1.5rem;">
+                        <div class="input-group">
+                            <input type="text" id="sound-braking" placeholder=" ">
+                            <label for="sound-braking">Sound while braking? (Yes/No)</label>
+                            <div class="input-highlight"></div>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="sound-turning" placeholder=" ">
+                            <label for="sound-turning">Sound while turning? (Yes/No)</label>
+                            <div class="input-highlight"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 2: Vibrations -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-wave-square section-icon"></i>
+                        <h2>Vibrations</h2>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Steering wheel vibration?</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="vib-steering">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Car shaking at high speed?</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="vib-speed">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Vibration when braking?</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="vib-braking">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 3: Smells -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-wind section-icon"></i>
+                        <h2>Smells</h2>
+                    </div>
+                    <div class="checkbox-grid">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="smell-burning">
+                            <label for="smell-burning">Burning smell</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="smell-fuel">
+                            <label for="smell-fuel">Fuel smell</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="smell-egg">
+                            <label for="smell-egg">Rotten egg smell</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="smell-coolant">
+                            <label for="smell-coolant">Sweet coolant smell</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 4: Leaks -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-droplet section-icon"></i>
+                        <h2>Leaks</h2>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Oil spots under car</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="leak-oil">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Coolant (green/pink)</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="leak-coolant">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Water (AC normal)</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="leak-water">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Brake fluid leaks</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="leak-brake">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 5: Driving Behavior -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-gamepad section-icon"></i>
+                        <h2>Driving Behavior</h2>
+                    </div>
+                    <div class="checkbox-grid">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="drive-pickup">
+                            <label for="drive-pickup">Reduced pickup/power</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="drive-gear">
+                            <label for="drive-gear">Gear shifting difficulty</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="drive-stall">
+                            <label for="drive-stall">Engine stalling</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="drive-steering">
+                            <label for="drive-steering">Hard steering</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="drive-overheat">
+                            <label for="drive-overheat">Car overheating</label>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <select id="drive-pull">
+                            <option value="" disabled selected></option>
+                            <option value="none">None</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                        </select>
+                        <label for="drive-pull">Car pulling left/right</label>
+                        <div class="input-highlight"></div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 6: Dashboard & Warnings -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-gauge-high section-icon"></i>
+                        <h2>Dashboard & Warnings</h2>
+                    </div>
+                    <div class="status-indicator-group">
+                        <label>Check engine light</label>
+                        <button type="button" class="status-btn" onclick="this.classList.toggle('active')">ON</button>
+                    </div>
+                    <div class="status-indicator-group">
+                        <label>ABS light</label>
+                        <button type="button" class="status-btn" onclick="this.classList.toggle('active')">ON</button>
+                    </div>
+                    <div class="status-indicator-group">
+                        <label>Oil pressure light</label>
+                        <button type="button" class="status-btn" onclick="this.classList.toggle('active')">ON</button>
+                    </div>
+                    <div class="status-indicator-group">
+                        <label>Battery light</label>
+                        <button type="button" class="status-btn" onclick="this.classList.toggle('active')">ON</button>
+                    </div>
+                    <div class="status-indicator-group">
+                        <label>Temperature warning</label>
+                        <button type="button" class="status-btn" onclick="this.classList.toggle('active')">ON</button>
+                    </div>
+                    <div class="status-indicator-group">
+                        <label>TPMS (Tyre pressure)</label>
+                        <button type="button" class="status-btn" onclick="this.classList.toggle('active')">ON</button>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 7: Tyres & Brakes -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-circle-notch section-icon"></i>
+                        <h2>Tyres & Brakes</h2>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Uneven tyre wear</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="tyre-wear">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Low tyre pressure often</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="tyre-pressure">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Squeaky brakes</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="brake-squeak">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <select id="brake-pedal">
+                            <option value="" disabled selected></option>
+                            <option value="normal">Normal</option>
+                            <option value="soft">Too Soft</option>
+                            <option value="hard">Too Hard</option>
+                        </select>
+                        <label for="brake-pedal">Brake pedal feel</label>
+                        <div class="input-highlight"></div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 8: Electrical Issues -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-plug section-icon"></i>
+                        <h2>Electrical Issues</h2>
+                    </div>
+                    <div class="checkbox-grid">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="elec-headlights">
+                            <label for="elec-headlights">Dim headlights</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="elec-ac">
+                            <label for="elec-ac">AC not cooling well</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="elec-windows">
+                            <label for="elec-windows">Power windows slow</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="elec-battery">
+                            <label for="elec-battery">Battery dying often</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="elec-start">
+                            <label for="elec-start">Car taking too long to start</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 9: Fluids Condition -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-oil-can section-icon"></i>
+                        <h2>Fluids Condition</h2>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Engine oil level low</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="fluid-oil-level">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Oil colour very black</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="fluid-oil-color">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Coolant level low</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="fluid-coolant">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Brake fluid low</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="fluid-brake">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 10: Service History -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-calendar-days section-icon"></i>
+                        <h2>Service History</h2>
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <input type="date" id="service-last" placeholder=" ">
+                            <label for="service-last">Last service date</label>
+                            <div class="input-highlight"></div>
+                        </div>
+                        <div class="input-group">
+                            <input type="date" id="service-oil" placeholder=" ">
+                            <label for="service-oil">Last oil change</label>
+                            <div class="input-highlight"></div>
+                        </div>
+                        <div class="input-group">
+                            <input type="date" id="service-brake" placeholder=" ">
+                            <label for="service-brake">Last brake pad change</label>
+                            <div class="input-highlight"></div>
+                        </div>
+                        <div class="input-group">
+                            <input type="date" id="service-tyre" placeholder=" ">
+                            <label for="service-tyre">Last tyre change</label>
+                            <div class="input-highlight"></div>
+                        </div>
+                        <div class="input-group full-width">
+                            <input type="date" id="service-battery" placeholder=" ">
+                            <label for="service-battery">Last battery change</label>
+                            <div class="input-highlight"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 11: Electric Vehicles -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-bolt section-icon"></i>
+                        <h2>Electric Vehicles (Optional)</h2>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Range dropping fast</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ev-range">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Charging slow</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ev-charge">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Battery heating</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ev-heat">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-wrapper">
+                        <label>Strange inverter/motor noise</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ev-noise">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Section 12: Vehicle Photos & Documentation -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-camera section-icon"></i>
+                        <h2>Vehicle Photos & Documentation</h2>
+                    </div>
+                    
+                    <!-- Exterior Photos -->
+                    <div class="upload-group">
+                        <h3>Exterior Photos</h3>
+                        <p class="upload-hint">Front, Rear, Left, Right, Dashboard</p>
+                        <div class="upload-zone" id="drop-zone-exterior">
+                            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                            <p>Drag & drop photos here or <span>browse</span></p>
+                            <span class="file-limit">Max 5MB per file • JPG, PNG</span>
+                            <input type="file" multiple accept="image/*" hidden>
+                        </div>
+                        <div class="file-preview-grid" id="preview-exterior">
+                            <!-- Previews will be added here via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Problem Areas -->
+                    <div class="upload-group">
+                        <h3>Problem Areas</h3>
+                        <p class="upload-hint">Specific damage or concern areas</p>
+                        <div class="upload-zone" id="drop-zone-problems">
+                            <i class="fa-solid fa-triangle-exclamation upload-icon"></i>
+                            <p>Drag & drop photos here or <span>browse</span></p>
+                            <span class="file-limit">Max 5MB per file • JPG, PNG</span>
+                            <input type="file" multiple accept="image/*" hidden>
+                        </div>
+                        <div class="file-preview-grid" id="preview-problems"></div>
+                    </div>
+
+                    <!-- Documents -->
+                    <div class="upload-group">
+                        <h3>Service Documents</h3>
+                        <p class="upload-hint">Receipts, Warranty Docs</p>
+                        <div class="upload-zone" id="drop-zone-docs">
+                            <i class="fa-solid fa-file-pdf upload-icon"></i>
+                            <p>Drag & drop documents here or <span>browse</span></p>
+                            <span class="file-limit">Max 5MB per file • PDF, JPG</span>
+                            <input type="file" multiple accept=".pdf,image/*" hidden>
+                        </div>
+                        <div class="file-preview-grid" id="preview-docs"></div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary">Save Draft</button>
+                    <button type="submit" class="btn btn-primary">
+                        Submit Report <i class="fa-solid fa-check"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('.logistics-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('.btn-primary');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
+                btn.style.backgroundColor = '#4CAF50';
+                btn.style.color = '#fff';
+                setTimeout(() => {
+                    window.location.href = 'analysis.html';
+                }, 1000);
+            }, 1500);
+        });
+
+        // File Upload Logic
+        document.querySelectorAll('.upload-zone').forEach(zone => {
+            const input = zone.querySelector('input[type="file"]');
+            const previewId = zone.id.replace('drop-zone-', 'preview-');
+            const previewContainer = document.getElementById(previewId);
+
+            // Click to upload
+            zone.addEventListener('click', () => input.click());
+
+            // Drag and drop events
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                zone.addEventListener(eventName, () => zone.classList.add('dragover'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, () => zone.classList.remove('dragover'), false);
+            });
+
+            zone.addEventListener('drop', handleDrop, false);
+            input.addEventListener('change', handleFiles, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles({ target: { files: files } });
+            }
+
+            function handleFiles(e) {
+                const files = [...e.target.files];
+                files.forEach(previewFile);
+            }
+
+            function previewFile(file) {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onloadend = function() {
+                    const div = document.createElement('div');
+                    div.className = 'file-preview-item';
+                    
+                    if (file.type.startsWith('image/')) {
+                        div.innerHTML = `
+                            <img src="${reader.result}" alt="${file.name}">
+                            <button type="button" class="remove-file"><i class="fa-solid fa-xmark"></i></button>
+                        `;
+                    } else {
+                        div.innerHTML = `
+                            <div class="file-icon"><i class="fa-solid fa-file-lines"></i></div>
+                            <span class="file-name">${file.name}</span>
+                            <button type="button" class="remove-file"><i class="fa-solid fa-xmark"></i></button>
+                        `;
+                    }
+                    
+                    previewContainer.appendChild(div);
+
+                    // Remove handler
+                    div.querySelector('.remove-file').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        div.remove();
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
