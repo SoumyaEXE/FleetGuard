@@ -75,19 +75,35 @@ export async function POST(request: NextRequest) {
       attendees,
     });
 
+    // Generate Google Calendar Link
+    const formatGCalDate = (date: Date) => date.toISOString().replace(/-|:|\.\d{3}/g, '');
+    const gCalStart = formatGCalDate(start);
+    const gCalEnd = formatGCalDate(end);
+    const gCalTitle = encodeURIComponent(`Repair – ${vehicleId} (${damageLevel})`);
+    const gCalDetails = encodeURIComponent(description);
+    const gCalAttendees = attendees.map(email => encodeURIComponent(email)).join(',');
+    
+    const googleCalendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gCalTitle}&dates=${gCalStart}/${gCalEnd}&details=${gCalDetails}&add=${gCalAttendees}`;
+
     // Send email with calendar invite
-    await sendRepairEmail({
-      to: attendees,
-      vehicleId,
-      damageLevel,
-      repairDate,
-      icsContent,
-    });
+    try {
+      await sendRepairEmail({
+        to: attendees,
+        vehicleId,
+        damageLevel,
+        repairDate,
+        icsContent,
+      });
+    } catch (emailError) {
+      console.warn('Failed to send email, but repair scheduled:', emailError);
+      // Continue execution even if email fails
+    }
 
     return NextResponse.json({
       success: true,
       id,
-      message: 'Repair scheduled and calendar invite sent',
+      message: 'Repair scheduled',
+      googleCalendarLink,
     });
   } catch (error) {
     console.error('Error creating repair:', error);

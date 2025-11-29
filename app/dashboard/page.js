@@ -25,15 +25,14 @@ export default function DashboardPage() {
   const [newVehicle, setNewVehicle] = useState({ name: '', plate: '' });
   const [adding, setAdding] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all'); // all, healthy, warning, critical
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // Load vehicles
-        // Note: Client-side sorting used to avoid creating a composite index for now.
-        // For production with large datasets, create the index and use orderBy("createdAt", "desc") in the query.
         const q = query(
           collection(db, "vehicles"), 
           where("userId", "==", currentUser.uid)
@@ -44,7 +43,6 @@ export default function DashboardPage() {
             id: doc.id,
             ...doc.data()
           })).sort((a, b) => {
-            // Sort by createdAt desc
             const timeA = a.createdAt?.seconds || 0;
             const timeB = b.createdAt?.seconds || 0;
             return timeB - timeA;
@@ -114,6 +112,43 @@ export default function DashboardPage() {
     }
   };
 
+  // Computed Stats
+  const stats = {
+    total: vehicles.length,
+    avgHealth: vehicles.length > 0 
+      ? Math.round(vehicles.reduce((acc, v) => acc + (v.lastHealthScore || 0), 0) / vehicles.length) 
+      : 0,
+    critical: vehicles.filter(v => (v.lastHealthScore || 100) < 50).length,
+    warning: vehicles.filter(v => (v.lastHealthScore || 100) >= 50 && (v.lastHealthScore || 100) < 80).length
+  };
+
+  // Filtered Vehicles
+  const filteredVehicles = vehicles.filter(vehicle => {
+    const matchesSearch = vehicle.vehicleName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    const score = vehicle.lastHealthScore || 100;
+    if (filterStatus === 'healthy') return score >= 80;
+    if (filterStatus === 'warning') return score >= 50 && score < 80;
+    if (filterStatus === 'critical') return score < 50;
+    
+    return true;
+  });
+
+  const getHealthColor = (score) => {
+    if (score >= 80) return 'var(--color-success)';
+    if (score >= 50) return 'var(--color-warning)';
+    return 'var(--color-danger)';
+  };
+
+  const getHealthLabel = (score) => {
+    if (score >= 80) return 'Healthy';
+    if (score >= 50) return 'Attention';
+    return 'Critical';
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -131,7 +166,7 @@ export default function DashboardPage() {
         </div>
         <div className="user-menu">
           <div className="user-info">
-            <span className="user-name">{user?.displayName || 'User'}</span>
+            <span className="user-name">{user?.displayName || 'Fleet Manager'}</span>
             <span className="user-email">{user?.email}</span>
           </div>
           <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
@@ -142,83 +177,160 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <div className="dashboard-container">
-        <div className="dashboard-header">
-          <h2>My Vehicles</h2>
+        
+        {/* Welcome & Stats Section */}
+        <div className="dashboard-welcome">
+          <div>
+            <h1>Dashboard</h1>
+            <p className="text-light">Welcome back, here's what's happening with your fleet today.</p>
+          </div>
+          <button onClick={() => setShowModal(true)} className="btn btn-primary desktop-add-btn">
+            <i className="fa-solid fa-plus"></i> Add Vehicle
+          </button>
         </div>
 
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
+              <i className="fa-solid fa-truck"></i>
+            </div>
+            <div className="stat-info">
+              <span className="stat-label">Total Vehicles</span>
+              <span className="stat-value">{stats.total}</span>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+              <i className="fa-solid fa-heart-pulse"></i>
+            </div>
+            <div className="stat-info">
+              <span className="stat-label">Avg. Fleet Health</span>
+              <span className="stat-value">{stats.avgHealth}%</span>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: '#fef2f2', color: '#dc2626' }}>
+              <i className="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div className="stat-info">
+              <span className="stat-label">Critical Issues</span>
+              <span className="stat-value">{stats.critical}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Controls & Filters */}
+        <div className="controls-row">
+          <div className="search-wrapper">
+            <i className="fa-solid fa-magnifying-glass"></i>
+            <input 
+              type="text" 
+              placeholder="Search vehicles..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="filter-wrapper">
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+              <option value="all">All Status</option>
+              <option value="healthy">Healthy</option>
+              <option value="warning">Needs Attention</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Vehicle Grid */}
         <div className="vehicle-grid">
-          {vehicles.length === 0 ? (
+          {filteredVehicles.length === 0 ? (
             <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
               <i className="fa-solid fa-car empty-icon"></i>
-              <h3>No vehicles added yet</h3>
-              <p style={{ color: 'var(--text-light)', marginBottom: '1.5rem' }}>Add your first vehicle to get started with inspections</p>
-              <button onClick={() => setShowModal(true)} className="btn btn-primary">Add Vehicle</button>
+              <h3>No vehicles found</h3>
+              <p style={{ color: 'var(--text-light)', marginBottom: '1.5rem' }}>
+                {vehicles.length === 0 ? "Add your first vehicle to get started." : "Try adjusting your search or filters."}
+              </p>
+              {vehicles.length === 0 && (
+                <button onClick={() => setShowModal(true)} className="btn btn-primary">Add Vehicle</button>
+              )}
             </div>
           ) : (
-            vehicles.map(vehicle => (
-              <div key={vehicle.id} className="vehicle-card">
-                <div className="vehicle-card-header">
-                  <div>
-                    <div className="vehicle-name">{vehicle.vehicleName}</div>
-                    <span className="vehicle-plate">{vehicle.licensePlate}</span>
-                  </div>
-                  <button 
-                    className="btn-delete" 
-                    onClick={() => handleDeleteVehicle(vehicle.id)}
-                    title="Delete Vehicle"
-                  >
-                    <i className="fa-solid fa-trash"></i>
-                  </button>
-                </div>
-                
-                {vehicle.lastHealthScore && (
-                  <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ 
-                      width: '40px', 
-                      height: '40px', 
-                      borderRadius: '50%', 
-                      background: vehicle.lastHealthScore >= 80 ? '#dcfce7' : vehicle.lastHealthScore >= 50 ? '#fef3c7' : '#fee2e2',
-                      color: vehicle.lastHealthScore >= 80 ? '#166534' : vehicle.lastHealthScore >= 50 ? '#d97706' : '#991b1b',
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      fontWeight: 'bold'
-                    }}>
-                      {vehicle.lastHealthScore}
+            filteredVehicles.map(vehicle => {
+              const score = vehicle.lastHealthScore || 0;
+              const healthColor = getHealthColor(score);
+              
+              return (
+                <div key={vehicle.id} className="vehicle-card">
+                  <div className="vehicle-card-header">
+                    <div className="vehicle-identity">
+                      <div className="vehicle-icon">
+                        <i className="fa-solid fa-car-side"></i>
+                      </div>
+                      <div>
+                        <div className="vehicle-name">{vehicle.vehicleName}</div>
+                        <span className="vehicle-plate">{vehicle.licensePlate}</span>
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
-                      Last Health Score
+                    <div className="card-actions">
+                      <button 
+                        className="btn-icon-only" 
+                        onClick={() => handleDeleteVehicle(vehicle.id)}
+                        title="Delete Vehicle"
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
                     </div>
                   </div>
-                )}
-
-                <div style={{ marginTop: '1.5rem', display: 'grid', gap: '0.5rem' }}>
-                  <Link 
-                    href={`/vehicle/${vehicle.id}?name=${encodeURIComponent(vehicle.vehicleName)}&plate=${encodeURIComponent(vehicle.licensePlate)}`} 
-                    className="btn btn-primary btn-full" 
-                    style={{ padding: '0.5rem', textAlign: 'center', display: 'block' }}
-                  >
-                    {vehicle.lastInspectionId ? 'New Inspection' : 'Start Inspection'}
-                  </Link>
                   
-                  {vehicle.lastInspectionId && (
+                  <div className="health-status-section">
+                    <div className="health-header">
+                      <span className="health-label">Health Score</span>
+                      <span className="health-score" style={{ color: healthColor }}>{score}/100</span>
+                    </div>
+                    <div className="health-bar-bg">
+                      <div 
+                        className="health-bar-fill" 
+                        style={{ width: `${score}%`, backgroundColor: healthColor }}
+                      ></div>
+                    </div>
+                    <div className="status-badge" style={{ 
+                      backgroundColor: `${healthColor}20`, 
+                      color: healthColor,
+                      marginTop: '0.5rem'
+                    }}>
+                      <i className={`fa-solid ${score >= 80 ? 'fa-check-circle' : score >= 50 ? 'fa-exclamation-circle' : 'fa-circle-xmark'}`}></i>
+                      {getHealthLabel(score)}
+                    </div>
+                  </div>
+
+                  <div className="card-footer">
                     <Link 
-                      href={`/analysis/${vehicle.lastInspectionId}`}
-                      className="btn btn-secondary btn-full"
-                      style={{ padding: '0.5rem', textAlign: 'center', display: 'block', background: 'transparent', border: '1px solid var(--text-light)', color: 'var(--text-main)' }}
+                      href={`/vehicle/${vehicle.id}?name=${encodeURIComponent(vehicle.vehicleName)}&plate=${encodeURIComponent(vehicle.licensePlate)}`} 
+                      className="btn btn-primary btn-full" 
                     >
-                      View Last Report
+                      {vehicle.lastInspectionId ? 'New Inspection' : 'Start Inspection'}
                     </Link>
-                  )}
+                    
+                    {vehicle.lastInspectionId && (
+                      <Link 
+                        href={`/analysis/${vehicle.lastInspectionId}`}
+                        className="btn btn-outline btn-full"
+                      >
+                        View Report
+                      </Link>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
 
-      {/* Add Vehicle FAB */}
-      <button onClick={() => setShowModal(true)} className="fab-add">
+      {/* Add Vehicle FAB (Mobile Only) */}
+      <button onClick={() => setShowModal(true)} className="fab-add mobile-only">
         <i className="fa-solid fa-plus"></i>
       </button>
 

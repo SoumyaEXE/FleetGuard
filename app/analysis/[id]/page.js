@@ -163,14 +163,15 @@ export default function AnalysisResultPage({ params }) {
 			const result = await response.json();
 
 			if (response.ok) {
-				alert('✅ Repair scheduled successfully! Calendar invite sent to email.');
 				setShowRepairModal(false);
+				if (result.googleCalendarLink) {
+					window.open(result.googleCalendarLink, '_blank');
+				}
 			} else {
-				alert(`❌ Failed to schedule repair: ${result.error || 'Unknown error'}`);
+				console.error(`Failed to schedule repair: ${result.error || 'Unknown error'}`);
 			}
 		} catch (error) {
 			console.error('Error scheduling repair:', error);
-			alert('❌ Failed to schedule repair. Please try again.');
 		} finally {
 			setSchedulingRepair(false);
 		}
