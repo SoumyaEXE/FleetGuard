@@ -123,9 +123,11 @@ img {
 }
 
 .btn-primary:hover {
-	background-color: var(--color-accent-hover);
+	background-color: var(--color-accent) !important;
+	color: var(--text-white) !important;
+	filter: brightness(1.15);
 	transform: translateY(-1px);
-	box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+	box-shadow: 0 0 20px rgba(37, 99, 235, 0.7);
 }
 
 .btn-secondary {
@@ -1160,9 +1162,11 @@ img {
 
 .btn-outline:hover {
 	border-color: var(--color-accent);
-	background: #eff6ff;
-	color: var(--color-accent);
+	background: transparent !important;
+	background-color: transparent !important;
+	color: var(--color-accent) !important;
 	transform: translateY(-1px);
+	box-shadow: 0 0 15px rgba(37, 99, 235, 0.35);
 }
 
 .btn-outline i {
@@ -3610,8 +3614,20 @@ input:focus + .slider {
 
 .section-title {
   text-align: center;
-  max-width: 700px;
-  margin: 0 auto 4rem;
+  max-width: 850px;
+  margin: 0 auto 5rem;
+  padding: 0 1.5rem;
+}
+
+.section-subtitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-success);
+  margin-bottom: 1.25rem;
+  display: block !important;
+  width: 100%;
 }
 
 .section-title .badge {
@@ -3629,18 +3645,28 @@ input:focus + .slider {
 
 .section-title h2 {
   font-family: var(--font-heading);
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 800;
-  color: var(--text-main);
-  margin: 1rem 0;
-  line-height: 1.2;
-  letter-spacing: -1px;
+  color: var(--text-heading);
+  margin: 0 0 2rem 0;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  padding: 0 1rem;
+  display: block !important;
+  width: 100%;
 }
 
-.section-title p {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
+.section-title p,
+.section-description {
+  font-size: 1.125rem;
+  color: var(--text-light);
+  line-height: 1.85;
+  max-width: 680px;
+  margin: 0 auto;
+  letter-spacing: 0.01em;
+  font-weight: 400;
+  display: block !important;
+  width: 100%;
 }
 
 .feature-grid {
