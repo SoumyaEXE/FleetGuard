@@ -33,7 +33,7 @@ FleetGuard is an enterprise-grade vehicle fleet management system that leverages
    The `.env.local` file has been created with the Gemini API key. Make sure it contains:
 
    ```env
-   NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyA6AQbV-lZRPacQTn-FmBjoIkIFoIEvyuw
+   NEXT_PUBLIC_GEMINI_API_KEY=your_api_key
    ```
 
 4. **Run the development server**
