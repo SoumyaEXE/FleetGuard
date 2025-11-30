@@ -132,16 +132,6 @@ export default function Home() {
       {/* Features Section */}
       <section id="features" className="features">
         <div className="container">
-          <div className="section-title">
-            <span className="badge badge-green" style={{ marginBottom: '1rem' }}>
-              Platform Features
-            </span>
-            <h2>Everything you need to run a high-performance fleet</h2>
-            <p>
-              Our comprehensive suite of tools helps you manage maintenance, costs, and compliance from a single dashboard.
-            </p>
-          </div>
-
           <div className="feature-grid">
             <div className="feature-card">
               <div className="icon-box">
@@ -197,11 +187,48 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="pricing-section">
+        <div className="container">
+          <div className="section-title">
+            <div className="section-subtitle">Simple Pricing</div>
+            <h2>Start Your Free Trial Today</h2>
+            <p className="section-description">
+              No credit card required. Experience the full power of FleetGuard for 14 days.
+            </p>
+          </div>
+          <div className="pricing-card-highlight">
+            <div className="pricing-badge">Free Trial</div>
+            <div className="pricing-header">
+              <h3>Get Started Free</h3>
+              <div className="pricing-price">
+                <span className="price-amount">$0</span>
+                <span className="price-period">for 14 days</span>
+              </div>
+            </div>
+            <ul className="pricing-features">
+              <li><i className="fa-solid fa-check"></i> Full platform access</li>
+              <li><i className="fa-solid fa-check"></i> Up to 50 vehicles</li>
+              <li><i className="fa-solid fa-check"></i> AI diagnostic reports</li>
+              <li><i className="fa-solid fa-check"></i> Mobile app included</li>
+              <li><i className="fa-solid fa-check"></i> Email support</li>
+              <li><i className="fa-solid fa-check"></i> No credit card required</li>
+            </ul>
+            <Link href="/login" className="btn btn-primary btn-full">
+              Start Free Trial <i className="fa-solid fa-arrow-right"></i>
+            </Link>
+            <p className="pricing-note">
+              <i className="fa-solid fa-shield-halved"></i> Cancel anytime. Upgrade when you're ready.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="cta-section">
         <div className="container cta-box">
           <h2>Ready to modernize your fleet operations?</h2>
-          <p style={{ marginBottom: '2rem', color: 'var(--text-main)' }}>
+          <p style={{ marginBottom: '2rem', color: '#ffffff' }}>
             Join industry leaders who trust FleetGuard for their critical logistics infrastructure.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
